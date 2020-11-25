@@ -1,0 +1,102 @@
+#!/usr/bin/python3
+
+import os
+import subprocess
+
+CONNECTION_TIMEOUT = 20
+
+class bluelinkConnection():
+    def __init__(self, user, password, pin, carVIN):
+        self.user = user
+        self.pw = password
+        self.pin = pin
+        self.carVIN = carVIN
+            
+    def getStatus(self):
+        response = self.bluelinkCommunication('status.js')
+ 
+        carStatus = {'validData': False, 'status': {}} 
+
+        if response != -1:
+            carStatus['status'] = self.parseResponse(response)
+            if carStatus['status'] != {}:
+                carStatus['validData'] = True
+                
+        return carStatus
+
+    def parseResponse(self, theResponse):
+        statusDict = {}
+        statusDict['battery12V'] = self.getItem(theResponse, 'batSoc',',', f'loatType')
+        statusDict['soc'] = self.getItem(theResponse, 'batteryStatus',',', 'floatType')
+        statusDict['locked'] = self.getItem(theResponse, 'doorLock',',', 'boolType')
+        statusDict['airCtrlOn'] = self.getItem(theResponse, 'airCtrlOn',',', 'boolType')
+        return statusDict
+        
+        
+    def getItem(self, response, theItem, endCharacter, itemType):
+        tempString = response.split(theItem+':')
+        if len(tempString) > 1:
+            tempString2 = tempString[1].split(endCharacter)
+
+            if len(tempString2) >1:
+                if itemType == 'floatType':
+                    return float(tempString2[0])
+                elif itemType == 'boolType':
+                    if tempString2[0] == 'true':
+                        return True
+                    else:
+                        return False
+                else:
+                    return tempString2[0]
+            else:
+                return None
+        else:
+            return None
+
+    def startCharge(self):
+        self.bluelinkCommunication('startCharge.js')
+    def stopCharge(self):
+        self.bluelinkCommunication('stopCharge.js')
+
+    def startPreheatWithoutDefrost(self):
+        self.bluelinkCommunication('startPreheat.js')
+
+    def startPreheatDefrost(self):
+        self.bluelinkCommunication('startPreheatDefrost.js')
+
+    def startPrecool(self):
+        self.bluelinkCommunication('startPrecool.js')
+
+    def stopPreheat(self):
+        self.bluelinkCommunication('stopPreheat.js')
+
+    def bluelinkCommunication(self, command):
+        # Perform 3 tries before giving up
+        count = 0
+        theCommand = ['node', (command), self.user, self.pw, self.pin, self.carVIN] 
+        print(theCommand)
+        for count in range(3):
+            try:
+                rawResponse = subprocess.run(theCommand, capture_output=True, timeout=CONNECTION_TIMEOUT)
+            except:
+                print('Error when trying to read Bluelink')
+            else:
+                response = str(rawResponse)
+                print(rawResponse)
+
+                if response.find('UnhandledPromiseRejectionWarning') != -1:
+                    print('Bluelink: Error when trying to read Bluelink: UnhandledPromiseRejectionWarning')
+                elif len(response) == 0:
+                    print('Bluelink: Received empty status')
+                else:
+                    return response
+        return -1  
+        
+
+if __name__ == '__main__':
+    bl=bluelinkConnection()
+    #bl.startCharge()
+    print(bl.getStatus())
+    #bl.startPreheatWithoutDefrost()
+    #bl.stopPreheat()
+
