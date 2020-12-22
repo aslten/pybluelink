@@ -2,6 +2,7 @@
 
 import os
 import subprocess
+import time
 
 CONNECTION_TIMEOUT = 20
 
@@ -76,23 +77,27 @@ class bluelinkConnection():
         print("Connection over bluelink")
         # Perform 3 tries before giving up
         count = 0
-        theCommand = ['node', (self.path + command), self.user, self.pw, self.pin, self.carVIN] 
-
+        theCommand = ['node', (self.path + command), self.user, self.pw, self.pin, self.carVIN]
+        
+        success = False
         for count in range(3):
             try:
                 rawResponse = subprocess.run(theCommand, capture_output=True, timeout=CONNECTION_TIMEOUT)
+                #print(rawResponse)
             except:
                 print('Error when trying to read Bluelink')
             else:
                 response = str(rawResponse)
-                #print(rawResponse)
 
                 if response.find('UnhandledPromiseRejectionWarning') != -1:
                     print('Bluelink: Error when trying to read Bluelink: UnhandledPromiseRejectionWarning')
                 elif len(response) == 0:
                     print('Bluelink: Received empty status')
                 else:
+                    success = True
                     return response
+            if count < 3 and success == False:
+                time.sleep(10)
         return -1  
         
 
