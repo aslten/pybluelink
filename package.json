@@ -9,8 +9,7 @@
   "author": "Fredrik Edling",
   "license": "ISC",
   "dependencies": {
-    "bluelinky": "^5.2.0",
-    "dotenv": "^8.2.0",
-    "package.json": "^2.0.1"
+    "bluelinky": "^6.0.1",
+    "dotenv": "^8.2.0"
   }
 }

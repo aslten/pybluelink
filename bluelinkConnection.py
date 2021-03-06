@@ -20,7 +20,7 @@ class bluelinkConnection():
  
         carStatus = {'validData': False, 'status': {}} 
 
-        if response != -1:
+        if response != None:
             carStatus['status'] = self.parseResponse(response)
             if carStatus['status'] != {}:
                 carStatus['validData'] = True
@@ -80,10 +80,14 @@ class bluelinkConnection():
         theCommand = ['node', (self.path + command), self.user, self.pw, self.pin, self.carVIN]
         
         success = False
+        response = None
+
+        #return response
+        
         for count in range(3):
             try:
                 rawResponse = subprocess.run(theCommand, capture_output=True, timeout=CONNECTION_TIMEOUT)
-                #print(rawResponse)
+                print(rawResponse)
             except:
                 print('Error when trying to read Bluelink')
             else:
@@ -91,14 +95,16 @@ class bluelinkConnection():
 
                 if response.find('UnhandledPromiseRejectionWarning') != -1:
                     print('Bluelink: Error when trying to read Bluelink: UnhandledPromiseRejectionWarning')
+                    response = None
                 elif len(response) == 0:
                     print('Bluelink: Received empty status')
+                    response = None
                 else:
                     success = True
-                    return response
+                    break
             if count < 3 and success == False:
                 time.sleep(10)
-        return -1  
+        return response
         
 
 if __name__ == '__main__':
